@@ -8,58 +8,36 @@ from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 
 
-def browser_init(context):
-    """
-    Initializes browser based on environment variables:
-    BROWSER=chrome or firefox
-    HEADLESS=true or false
-    """
+def browser_init(context, scenario):
+    driver_path = ChromeDriverManager().install()
+    service = ChromeService(driver_path)
+    context.driver = webdriver.Chrome(service=service)
+    context.driver = webdriver.Chrome()
+    ### SAFARI ###
+    #context.driver = webdriver.Firefox()
+    # context.driver = webdriver.Chrome()
 
-    browser = os.getenv("BROWSER", "firefox").lower()
-    headless = os.getenv("HEADLESS", "true").lower() == "true"
-
-    if browser == "chrome":
-        chrome_options = ChromeOptions()
-
-        if headless:
-            chrome_options.add_argument("--headless=new")
-
-        chrome_options.add_argument("--window-size=1920,1080")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--no-sandbox")
-
-        service = ChromeService(ChromeDriverManager().install())
-        context.driver = webdriver.Chrome(service=service, options=chrome_options)
-
-    elif browser == "firefox":
-        firefox_options = FirefoxOptions()
-
-        if headless:
-            firefox_options.add_argument("--headless")
-
-        service = FirefoxService(GeckoDriverManager().install())
-        context.driver = webdriver.Firefox(service=service, options=firefox_options)
-
-    else:
-        raise Exception(f"Browser '{browser}' is not supported.")
+    ### HEADLESS MODE ####
+    # options = webdriver.ChromeOptions()
+    # options.add_argument('headless')
+    # context.driver = webdriver.Chrome(
+    #     options=options
+    # )
+    ### BROWSERSTACK ###
+    bs_user = '******'
+    bs_key = '*****'
+    url = f'http://{bs_user}:{bs_key}@hub-cloud.browserstack.com/wd/hub'
+    options = ChromeOptions()
+    bstack_options = {
+    "os" : "Windows",
+    "osVersion" : "11",
+    "browserVersion" : "latest",
+    'browserName': 'Chrome',
+    'sessionName': scenario,
+    }
+    options.set_capability('bstack:options', bstack_options)
+    context.driver = webdriver.Remote(command_executor=url, options=options)
 
     context.driver.maximize_window()
     context.driver.implicitly_wait(4)
 
-
-def before_scenario(context, scenario):
-    print('\nStarted scenario:', scenario.name)
-    browser_init(context)
-
-
-def before_step(context, step):
-    print('\nStarted step:', step.name)
-
-
-def after_step(context, step):
-    if step.status == 'failed':
-        print('\nStep failed:', step.name)
-
-
-def after_scenario(context, scenario):
-    context.driver.quit()
