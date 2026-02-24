@@ -13,7 +13,7 @@ def browser_init(context, scenario):
     service = ChromeService(driver_path)
     context.driver = webdriver.Chrome(service=service)
     context.driver = webdriver.Chrome()
-    ### SAFARI ###
+    ### BROWSER OPTIONS ###
     #context.driver = webdriver.Firefox()
     # context.driver = webdriver.Chrome()
 
